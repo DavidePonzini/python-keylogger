@@ -33,7 +33,7 @@ class Keylogger:
     def wait(self):
         try:
             while True:
-                time.sleep(1)
+                time.sleep(1e6)
         except Exception as e:
             self.log_object(e)
             self.stop()
