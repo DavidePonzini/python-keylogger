@@ -1,2 +1,4 @@
 keylogger-report.txt
 __pycache__
+build/
+dist/
