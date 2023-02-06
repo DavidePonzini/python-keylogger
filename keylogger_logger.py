@@ -2,6 +2,10 @@ import sys
 from datetime import datetime
 
 
+def get_timestamp():
+    return f'\n===== {str(datetime.utcnow())} =====\n'
+
+
 class _AbstractLogger:
     def __init__(self):
         pass
@@ -19,15 +23,22 @@ class _AbstractLogger:
     def save(self):
         pass
 
+    def on_attached(self):
+        pass
+
+    def on_detached(self):
+        self.save()
+
+
 class FileLogger(_AbstractLogger):
     def __init__(self, file):
         super().__init__()
-        self.buffer = ''
+        self.__buffer = ''
         self.file = open(file, 'a')
         self.write_timestamp()
 
     def write_timestamp(self):
-        self.file.write(f'\n===== {str(datetime.utcnow())} =====\n')
+        self.file.write(get_timestamp())
 
     def close(self):
         super().close()
@@ -36,15 +47,23 @@ class FileLogger(_AbstractLogger):
         self.file.close()
 
     def log(self, text: str):
-        self.buffer += text
+        self.__buffer += text
         return super().log(text)
 
     def save(self):
         super().save()
-        self.file.write(self.buffer)
-        self.buffer = ''
+        self.file.write(self.__buffer)
+        self.__buffer = ''
 
 class DebugLogger(_AbstractLogger):
+    def on_attached(self):
+        super().on_attached()
+        print(get_timestamp())
+
+    def close(self):
+        super().close()
+        print(get_timestamp())
+
     def log(self, text: str):
         print(text, file=sys.stdout, end='', flush=True)
         return super().log(text)

