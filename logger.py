@@ -1,4 +1,5 @@
 import sys
+import socket
 from datetime import datetime
 
 
@@ -6,7 +7,7 @@ def get_timestamp():
     return f'\n===== {str(datetime.utcnow())} =====\n'
 
 
-class _AbstractLogger:
+class AbstractLogger:
     def __init__(self):
         pass
 
@@ -30,11 +31,13 @@ class _AbstractLogger:
         self.save()
 
 
-class FileLogger(_AbstractLogger):
+class FileLogger(AbstractLogger):
     def __init__(self, file):
         super().__init__()
         self.__buffer = ''
         self.file = open(file, 'a')
+    
+    def on_attached(self):
         self.write_timestamp()
 
     def write_timestamp(self):
@@ -55,7 +58,8 @@ class FileLogger(_AbstractLogger):
         self.file.write(self.__buffer)
         self.__buffer = ''
 
-class DebugLogger(_AbstractLogger):
+
+class ConsoleLogger(AbstractLogger):
     def on_attached(self):
         super().on_attached()
         print(get_timestamp())
@@ -67,3 +71,17 @@ class DebugLogger(_AbstractLogger):
     def log(self, text: str):
         print(text, file=sys.stdout, end='', flush=True)
         return super().log(text)
+
+
+class TCPLogger(AbstractLogger):
+    def __init__(self, ip, port):
+        super().__init__()
+        self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__socket.connect((ip, port))
+
+    def log(self, text: str):
+        self.__socket.sendall(text)
+
+    def close(self):
+        super().close()
+        self.__socket.close()

