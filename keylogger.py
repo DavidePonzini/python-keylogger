@@ -19,6 +19,8 @@ class Keylogger:
 
         # safely shut down the keylogger
         signal.signal(signal.SIGINT, self.shutdown)
+        signal.signal(signal.SIGTERM, self.shutdown)
+        signal.signal(signal.SIGHUP, self.shutdown)
         
     def attach_logger(self, logger: logger.AbstractLogger):
         self.__loggers.append(logger)

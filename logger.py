@@ -1,13 +1,13 @@
 import sys
 import socket
 from datetime import datetime
-
+from abc import ABC, abstractclassmethod
 
 def get_timestamp():
     return f'\n===== {str(datetime.utcnow())} =====\n'
 
 
-class AbstractLogger:
+class AbstractLogger(ABC):
     def __init__(self):
         pass
 
@@ -15,6 +15,7 @@ class AbstractLogger:
         self.log(get_timestamp())
         self.log('\n')
 
+    @abstractclassmethod
     def log(self, text: str) -> None:
         pass
 
