@@ -1,3 +1,3 @@
 compile:
 	rm -rf dist/
-	pyinstaller --onefile -y --name keylogger main.py
+	pyinstaller --onefile -y --name main main.py
