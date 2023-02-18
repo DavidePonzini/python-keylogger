@@ -12,13 +12,14 @@ class AbstractLogger:
         pass
 
     def close(self) -> None:
-        pass
+        self.log(get_timestamp())
+        self.log('\n')
 
     def log(self, text: str) -> None:
         pass
 
     def on_attached(self) -> None:
-        pass
+        self.log(get_timestamp())
 
 
 class FileLogger(AbstractLogger):
@@ -26,17 +27,8 @@ class FileLogger(AbstractLogger):
         super().__init__()
         self.file = open(file, 'a')
     
-    def on_attached(self) -> None:
-        super().on_attached()
-        self.write_timestamp()
-
-    def write_timestamp(self) -> None:
-        self.file.write(get_timestamp())
-
     def close(self) -> None:
         super().close()
-        self.write_timestamp()
-        self.file.write('\n')
         self.file.close()
 
     def log(self, text: str) -> None:
@@ -45,13 +37,8 @@ class FileLogger(AbstractLogger):
 
 
 class ConsoleLogger(AbstractLogger):
-    def on_attached(self) -> None:
-        super().on_attached()
-        print(get_timestamp())
-
     def close(self) -> None:
         super().close()
-        print(get_timestamp())
 
     def log(self, text: str) -> None:
         super().log(text)
@@ -60,19 +47,14 @@ class ConsoleLogger(AbstractLogger):
 
 class TCPLogger(AbstractLogger):
     def __init__(self, ip, port):
-        raise NotImplementedError
         super().__init__()
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.connect((ip, port))
 
-    def on_attached(self) -> None:
-        super().on_attached()
-        self.__socket.sendall(get_timestamp())
-
     def log(self, text: str):
-        self.__socket.sendall(text)
+        super().log(text)
+        self.__socket.sendall(text.encode())
 
     def close(self):
         super().close()
-        self.__socket.sendall(get_timestamp())
         self.__socket.close()

